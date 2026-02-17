@@ -3,7 +3,7 @@
 
 #include <controller_interface/controller_interface.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
-#include <crisp_controllers/twist_broadcaster_parameters.hpp>
+#include <twist_broadcaster_parameters.hpp>
 #include <pinocchio/multibody/fwd.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 

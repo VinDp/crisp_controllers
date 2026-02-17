@@ -2,7 +2,7 @@
 #include <Eigen/Dense>
 
 #include <controller_interface/controller_interface.hpp>
-#include <crisp_controllers/torque_feedback_controller_parameters.hpp>
+#include <torque_feedback_controller_parameters.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <geometry_msgs/msg/wrench_stamped.hpp>
 #include <pinocchio/multibody/model.hpp>
