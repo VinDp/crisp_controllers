@@ -51,7 +51,7 @@ CartesianController::state_interface_configuration() const {
 
 controller_interface::return_type
 CartesianController::update(const rclcpp::Time &time,
-                                     const rclcpp::Duration & /*period*/) {
+                                     const rclcpp::Duration &period) {
 
   size_t num_joints = params_.joints.size();
   for (size_t i = 0; i < num_joints; i++) {
@@ -87,8 +87,18 @@ CartesianController::update(const rclcpp::Time &time,
   pinocchio::forwardKinematics(model_, data_, q_pin, dq);
   pinocchio::updateFramePlacements(model_, data_);
 
+  // pinocchio::SE3 new_target_pose =
+  //     pinocchio::SE3(target_orientation_.toRotationMatrix(), target_position_);
+
+  Eigen::Vector3d delta_pos = x_adm.head<3>();
+  Eigen::Vector3d delta_rot = x_adm.tail<3>();
+
+  Eigen::Matrix3d R_delta = pinocchio::exp3(delta_rot);
+
   pinocchio::SE3 new_target_pose =
-      pinocchio::SE3(target_orientation_.toRotationMatrix(), target_position_);
+      pinocchio::SE3(
+          R_delta * end_effector_pose.rotation(),
+          end_effector_pose.translation() + delta_pos);
 
   target_pose_ = pinocchio::exp6(exponential_moving_average(
       pinocchio::log6(target_pose_), pinocchio::log6(new_target_pose),
@@ -147,6 +157,23 @@ CartesianController::update(const rclcpp::Time &time,
     return controller_interface::return_type::ERROR;
   }
 
+  double dt = period.seconds();
+
+  // RL desired wrench is target_wrench_
+  Eigen::Matrix<double,6,1> F_des = target_wrench_;
+
+  // Admittance equation:
+  // Md ddx + Dd dx + Kd x = F_des - F_ext
+
+  Eigen::Matrix<double,6,1> F_error = F_des - wrench_ext;
+
+  ddx_adm = Md.ldlt().solve(F_error - Dd * dx_adm - Kd * x_adm); 
+  // ddx_adm = Md.inverse() * (F_error - Dd * dx_adm - Kd * x_adm);
+
+  // Integrate
+  dx_adm += ddx_adm * dt;
+  x_adm  += dx_adm * dt;
+
   if (params_.use_operational_space) {
 
     pinocchio::computeMinverse(model_, data_, q_pin);
@@ -189,10 +216,9 @@ CartesianController::update(const rclcpp::Time &time,
                     ? pinocchio::computeGeneralizedGravity(model_, data_, q_pin)
                     : Eigen::VectorXd::Zero(model_.nv);
 
-  tau_wrench << J.transpose() * target_wrench_;
 
   tau_d << tau_task + tau_nullspace + tau_friction + tau_coriolis +
-               tau_gravity + tau_joint_limits + tau_wrench;
+               tau_gravity + tau_joint_limits;
 
   if (params_.limit_torques) {
     tau_d = saturateTorqueRate(tau_d, tau_previous, params_.max_delta_tau);
@@ -378,6 +404,18 @@ CallbackReturn CartesianController::on_configure(
   wrench_sub_ = get_node()->create_subscription<geometry_msgs::msg::WrenchStamped>(
       "target_wrench", rclcpp::QoS(1), target_wrench_callback);
 
+  ft_sensor_sub_ = get_node()->create_subscription<geometry_msgs::msg::WrenchStamped>(
+      "ft_sensor", rclcpp::QoS(1),
+      [this](const geometry_msgs::msg::WrenchStamped::SharedPtr msg)
+      {
+          wrench_ext <<
+              msg->wrench.force.x,
+              msg->wrench.force.y,
+              msg->wrench.force.z,
+              msg->wrench.torque.x,
+              msg->wrench.torque.y,
+              msg->wrench.torque.z;
+      });
 
   // Initialize all control vectors with appropriate dimensions
   tau_task = Eigen::VectorXd::Zero(model_.nv);
@@ -389,6 +427,20 @@ CallbackReturn CartesianController::on_configure(
   tau_gravity = Eigen::VectorXd::Zero(model_.nv);
   tau_wrench = Eigen::VectorXd::Zero(model_.nv);
   tau_d = Eigen::VectorXd::Zero(model_.nv);
+
+  // Initialize Admittance related matrices and vectors
+  // TODO: make params out of them
+  Md.setIdentity();
+  Dd.setIdentity();
+  Kd.setZero();   // usually zero for insertion
+
+  Md.diagonal() << 2,2,2, 0.1,0.1,0.1;    // tune
+  Dd.diagonal() << 50,50,50, 5,5,5;       // tune
+
+  x_adm.setZero();
+  dx_adm.setZero();
+  ddx_adm.setZero();
+  wrench_ext.setZero();
 
   // Initialize target state vectors
   target_position_ = Eigen::Vector3d::Zero();

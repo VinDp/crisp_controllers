@@ -101,6 +101,8 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
   /** @brief Subscription for target wrench messages */
   rclcpp::Subscription<geometry_msgs::msg::WrenchStamped>::SharedPtr wrench_sub_;
+  /** @brief Subscription for ft sensor readings */
+  rclcpp::Subscription<geometry_msgs::msg::WrenchStamped>::SharedPtr ft_sensor_sub_;
 
   /** @brief Flag to indicate if multiple publishers detected */
   bool multiple_publishers_detected_;
@@ -245,6 +247,19 @@ private:
   Eigen::VectorXd tau_wrench;
   /** @brief Final desired torque command */
   Eigen::VectorXd tau_d;
+
+  /** @brief Admittance parameters */
+  Eigen::Matrix<double,6,6> Md;
+  Eigen::Matrix<double,6,6> Dd;
+  Eigen::Matrix<double,6,6> Kd;
+
+  /** @brief Admittance state */
+  Eigen::Matrix<double,6,1> x_adm;      // pose error space
+  Eigen::Matrix<double,6,1> dx_adm;
+  Eigen::Matrix<double,6,1> ddx_adm;
+
+  /** @brief External wrench */
+  Eigen::Matrix<double,6,1> wrench_ext;
 
   /**
    * @brief Log debug information based on parameter settings
