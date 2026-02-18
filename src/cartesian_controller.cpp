@@ -87,6 +87,8 @@ CartesianController::update(const rclcpp::Time &time,
   pinocchio::forwardKinematics(model_, data_, q_pin, dq);
   pinocchio::updateFramePlacements(model_, data_);
 
+  // Get new endeffector pose
+  end_effector_pose = data_.oMf[end_effector_frame_id];
   // pinocchio::SE3 new_target_pose =
   //     pinocchio::SE3(target_orientation_.toRotationMatrix(), target_position_);
 
@@ -106,7 +108,6 @@ CartesianController::update(const rclcpp::Time &time,
 
   /*target_pose_ = pinocchio::SE3(target_orientation_.toRotationMatrix(),
    * target_position_);*/
-  end_effector_pose = data_.oMf[end_effector_frame_id];
 
   // We consider translation and rotation separately to avoid unatural screw
   // motions
