@@ -164,6 +164,9 @@ private:
   /** @brief Frame ID of the end effector in the robot model */
   int end_effector_frame_id;
 
+  /** @brief Frame ID of the force-torque sensor in the robot model */
+  int ft_sensor_frame_id;
+
   /** @brief Pinocchio robot model */
   pinocchio::Model model_;
   /** @brief Pinocchio data for computations */
@@ -198,6 +201,7 @@ private:
 
   /** @brief Current end effector pose */
   pinocchio::SE3 end_effector_pose;
+
   /** @brief End effector Jacobian matrix */
   pinocchio::Data::Matrix6x J;
 

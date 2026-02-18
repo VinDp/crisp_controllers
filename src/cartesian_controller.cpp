@@ -177,10 +177,15 @@ CartesianController::update(const rclcpp::Time &time,
           (*msg)->wrench.torque.z;
   }
 
-  // ToDo: maybe check that they are the same frame!
-  // convert wrench readings (fts_frame) into chosen
-  // end effector frame (is it the same for Impedance and admittance?)
-  Eigen::Matrix<double,6,1> F_error = F_des - wrench_ext;
+  // Get current tranformation from ft to ee
+  pinocchio::SE3 T_ee_world = data_.oMf[end_effector_frame_id];
+  pinocchio::SE3 T_ft_world = data_.oMf[ft_sensor_frame_id];
+  pinocchio::SE3 T_ee_ft = T_ee_world.inverse() * T_ft_world;
+
+  // Compute force in endeffector frame
+  Eigen::Matrix<double,6,1> F_ee =
+    T_ee_ft.toActionMatrix().transpose() * wrench_ext;
+  Eigen::Matrix<double,6,1> F_error = F_des - F_ee;
 
   ddx_adm = M_adm.ldlt().solve(F_error - D_adm * dx_adm - K_adm * x_adm);
   // ddx_adm = Md.inverse() * (F_error - Dd * dx_adm - Kd * x_adm);
@@ -468,6 +473,9 @@ CallbackReturn CartesianController::on_configure(
 
   // Initialize nullspace projection matrix
   nullspace_projection = Eigen::MatrixXd::Identity(model_.nv, model_.nv);
+
+  // Get FT sensor frame id
+  ft_sensor_frame_id = model_.getFrameId(params_.ft_sensor_frame);
 
   RCLCPP_INFO(get_node()->get_logger(), "State interfaces and control vectors initialized.");
 

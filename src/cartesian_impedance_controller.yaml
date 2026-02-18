@@ -7,6 +7,10 @@ cartesian_impedance_controller:
     type: string
     description: "Name of the end-effector frame"
 
+  ft_sensor_frame:
+    type: string
+    description: "Name of the force-torque sensor frame"
+
   base_frame:
     type: string
     default_value: ""
@@ -292,7 +296,7 @@ cartesian_impedance_controller:
 
   use_local_jacobian:
     type: bool
-    default_value: false
+    default_value: true
     description: "If true, we use the local jacobian for computations, otherwise we use the world jacobian."
 
   log:
