@@ -165,9 +165,12 @@ CartesianController::update(const rclcpp::Time &time,
   // Admittance equation:
   // Md ddx + Dd dx + Kd x = F_des - F_ext
 
+  // ToDo: maybe check that they are the same frame!
+  // convert wrench readings (fts_frame) into chosen
+  // end effector frame (is it the same for Impedance and admittance?)
   Eigen::Matrix<double,6,1> F_error = F_des - wrench_ext;
 
-  ddx_adm = Md.ldlt().solve(F_error - Dd * dx_adm - Kd * x_adm); 
+  ddx_adm = M_adm.ldlt().solve(F_error - D_adm * dx_adm - K_adm * x_adm);
   // ddx_adm = Md.inverse() * (F_error - Dd * dx_adm - Kd * x_adm);
 
   // Integrate
@@ -404,6 +407,7 @@ CallbackReturn CartesianController::on_configure(
   wrench_sub_ = get_node()->create_subscription<geometry_msgs::msg::WrenchStamped>(
       "target_wrench", rclcpp::QoS(1), target_wrench_callback);
 
+  // ToDo: for the callback we should be maybe use a RT buffer as well
   ft_sensor_sub_ = get_node()->create_subscription<geometry_msgs::msg::WrenchStamped>(
       "ft_sensor", rclcpp::QoS(1),
       [this](const geometry_msgs::msg::WrenchStamped::SharedPtr msg)
@@ -430,12 +434,16 @@ CallbackReturn CartesianController::on_configure(
 
   // Initialize Admittance related matrices and vectors
   // TODO: make params out of them
-  Md.setIdentity();
-  Dd.setIdentity();
-  Kd.setZero();   // usually zero for insertion
+  // Md.setIdentity();
+  // Dd.setIdentity();
+  // Kd.setZero();   // usually zero for insertion
 
-  Md.diagonal() << 2,2,2, 0.1,0.1,0.1;    // tune
-  Dd.diagonal() << 50,50,50, 5,5,5;       // tune
+  M_adm.setIdentity();
+  D_adm.setIdentity();
+  K_adm.setZero();   // usually zero for insertion
+
+  // Md.diagonal() << 2,2,2, 0.1,0.1,0.1;    // tune
+  // Dd.diagonal() << 50,50,50, 5,5,5;       // tune
 
   x_adm.setZero();
   dx_adm.setZero();
@@ -461,6 +469,27 @@ CallbackReturn CartesianController::on_configure(
 }
 
 void CartesianController::setStiffnessAndDamping() {
+
+  // Admittance-related params
+  M_adm.setZero();
+  M_adm.diagonal() << params_.task.m_adm_pos_x, params_.task.m_adm_pos_y,
+      params_.task.m_adm_pos_z, params_.task.m_adm_rot_x, params_.task.m_adm_rot_y,
+      params_.task.m_adm_rot_z;
+
+  K_adm.setZero();
+  K_adm.diagonal() << params_.task.k_adm_pos_x, params_.task.k_adm_pos_y,
+      params_.task.k_adm_pos_z, params_.task.k_adm_rot_x, params_.task.k_adm_rot_y,
+      params_.task.k_adm_rot_z;
+
+  D_adm.setZero();
+  // For each axis, use explicit damping if > 0, otherwise compute from stiffness
+  D_adm.diagonal() <<
+      (params_.task.d_adm_pos_x > 0 ? params_.task.d_adm_pos_x : 2.0 * std::sqrt(params_.task.k_adm_pos_x)),
+      (params_.task.d_adm_pos_y > 0 ? params_.task.d_adm_pos_y : 2.0 * std::sqrt(params_.task.k_adm_pos_y)),
+      (params_.task.d_adm_pos_z > 0 ? params_.task.d_adm_pos_z : 2.0 * std::sqrt(params_.task.k_adm_pos_z)),
+      (params_.task.d_adm_rot_x > 0 ? params_.task.d_adm_rot_x : 2.0 * std::sqrt(params_.task.k_adm_rot_x)),
+      (params_.task.d_adm_rot_y > 0 ? params_.task.d_adm_rot_y : 2.0 * std::sqrt(params_.task.k_adm_rot_y)),
+      (params_.task.d_adm_rot_z > 0 ? params_.task.d_adm_rot_z : 2.0 * std::sqrt(params_.task.k_adm_rot_z));
 
   stiffness.setZero();
   stiffness.diagonal() << params_.task.k_pos_x, params_.task.k_pos_y,

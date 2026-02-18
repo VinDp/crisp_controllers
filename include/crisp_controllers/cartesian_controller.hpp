@@ -249,9 +249,9 @@ private:
   Eigen::VectorXd tau_d;
 
   /** @brief Admittance parameters */
-  Eigen::Matrix<double,6,6> Md;
-  Eigen::Matrix<double,6,6> Dd;
-  Eigen::Matrix<double,6,6> Kd;
+  Eigen::Matrix<double,6,6> M_adm;
+  Eigen::Matrix<double,6,6> D_adm;
+  Eigen::Matrix<double,6,6> K_adm;
 
   /** @brief Admittance state */
   Eigen::Matrix<double,6,1> x_adm;      // pose error space

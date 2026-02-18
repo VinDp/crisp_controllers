@@ -18,6 +18,114 @@ cartesian_impedance_controller:
     description: "Whether we use operational space control or cartesian impedance control"
 
   task:
+    m_adm_pos_x:
+      type: double
+      default_value: 50.0
+      description: "Inertia in the x direction for the translation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    m_adm_pos_y:
+      type: double
+      default_value: 50.0
+      description: "Inertia in the x direction for the translation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    m_adm_pos_z:
+      type: double
+      default_value: 50.0
+      description: "Inertia in the x direction for the translation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    m_adm_rot_x:
+      type: double
+      default_value: 5.0
+      description: "Inertia in the x direction for the rotation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    m_adm_rot_y:
+      type: double
+      default_value: 5.0
+      description: "Inertia in the x direction for the rotation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    m_adm_rot_z:
+      type: double
+      default_value: 5.0
+      description: "Inertia in the x direction for the rotation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    k_adm_pos_x:
+      type: double
+      default_value: 500.0
+      description: "Stiffness in the x direction for the translation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    d_adm_pos_x:
+      type: double
+      default_value: -1.0
+      description: "Damping in the x direction for the translation. If negative, computed as 2*sqrt(stiffness)"
+      validation:
+        bounds<>: [-1.0, 5000.0]
+    k_adm_pos_y:
+      type: double
+      default_value: 500.0
+      description: "Stiffness in the y direction for the translation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    d_adm_pos_y:
+      type: double
+      default_value: -1.0
+      description: "Damping in the y direction for the translation. If negative, computed as 2*sqrt(stiffness)"
+      validation:
+        bounds<>: [-1.0, 5000.0]
+    k_adm_pos_z:
+      type: double
+      default_value: 500.0
+      description: "Stiffness in the z direction for the translation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    d_adm_pos_z:
+      type: double
+      default_value: -1.0
+      description: "Damping in the z direction for the translation. If negative, computed as 2*sqrt(stiffness)"
+      validation:
+        bounds<>: [-1.0, 5000.0]
+    k_adm_rot_x:
+      type: double
+      default_value: 30.0
+      description: "Stiffness in the x direction for the orientation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    d_adm_rot_x:
+      type: double
+      default_value: -1.0
+      description: "Damping in the x direction for the orientation. If negative, computed as 2*sqrt(stiffness)"
+      validation:
+        bounds<>: [-1.0, 5000.0]
+    k_adm_rot_y:
+      type: double
+      default_value: 30.0
+      description: "Stiffness in the y direction for the orientation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    d_adm_rot_y:
+      type: double
+      default_value: -1.0
+      description: "Damping in the y direction for the orientation. If negative, computed as 2*sqrt(stiffness)"
+      validation:
+        bounds<>: [-1.0, 5000.0]
+    k_adm_rot_z:
+      type: double
+      default_value: 30.0
+      description: "Stiffness in the z direction for the orientation"
+      validation:
+        bounds<>: [0.0, 5000.0]
+    d_adm_rot_z:
+      type: double
+      default_value: -1.0
+      description: "Damping in the z direction for the orientation. If negative, computed as 2*sqrt(stiffness)"
+      validation:
+        bounds<>: [-1.0, 5000.0]
     k_pos_x:
       type: double
       default_value: 500.0
