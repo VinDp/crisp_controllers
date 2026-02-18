@@ -230,6 +230,9 @@ private:
   /** @brief Maximum allowed delta values for error clipping */
   Eigen::VectorXd max_delta_ = Eigen::VectorXd::Zero(6);
 
+  /** @brief Maximum allowed velocity for integration */
+  Eigen::VectorXd v_max_ = Eigen::VectorXd::Zero(6);
+
   /** @brief Nullspace projection matrix */
   Eigen::MatrixXd nullspace_projection;
 

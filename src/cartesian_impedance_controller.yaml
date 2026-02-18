@@ -202,6 +202,31 @@ cartesian_impedance_controller:
       description: "Damping in the z direction for the orientation. If negative, computed as 2*sqrt(stiffness)"
       validation:
         bounds<>: [-1.0, 5000.0]
+    v_max:
+      x:
+        type: double
+        description: "Max allowed velocity error in x direction."
+        default_value: 0.01
+      y:
+        type: double
+        description: "Max allowed velocity error in y direction."
+        default_value: 0.01
+      z:
+        type: double
+        description: "Max allowed velocity error in z direction."
+        default_value: 0.02
+      rx:
+        type: double
+        description: "Max allowed velocity error in the rotational x direction (local or global frame)."
+        default_value: 0.05
+      ry:
+        type: double
+        description: "Max allowed velocity error in the rotational y direction (local or global frame)."
+        default_value: 0.05
+      rz:
+        type: double
+        description: "Max allowed velocity error in the rotational z direction (local or global frame)."
+        default_value: 0.1
     error_clip:
       x:
         type: double

@@ -192,6 +192,13 @@ CartesianController::update(const rclcpp::Time &time,
 
   // Integrate
   dx_adm += ddx_adm * dt;
+
+  // Clip velocities
+  v_max_ << params_.task.v_max.x, params_.task.v_max.y, params_.task.v_max.z, 
+                  params_.task.v_max.rx, params_.task.v_max.ry, params_.task.v_max.rz;
+  dx_adm = dx_adm.cwiseMax(-v_max_).cwiseMin(v_max_);
+
+  // Update position
   x_adm  += dx_adm * dt;
 
   if (params_.use_operational_space) {
