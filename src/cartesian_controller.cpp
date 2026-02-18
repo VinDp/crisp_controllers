@@ -165,6 +165,17 @@ CartesianController::update(const rclcpp::Time &time,
   // Admittance equation:
   // Md ddx + Dd dx + Kd x = F_des - F_ext
 
+  auto msg = ft_sensor_buffer_.readFromRT();
+  if (msg && *msg) {
+      wrench_ext <<
+          (*msg)->wrench.force.x,
+          (*msg)->wrench.force.y,
+          (*msg)->wrench.force.z,
+          (*msg)->wrench.torque.x,
+          (*msg)->wrench.torque.y,
+          (*msg)->wrench.torque.z;
+  }
+
   // ToDo: maybe check that they are the same frame!
   // convert wrench readings (fts_frame) into chosen
   // end effector frame (is it the same for Impedance and admittance?)
@@ -407,18 +418,12 @@ CallbackReturn CartesianController::on_configure(
   wrench_sub_ = get_node()->create_subscription<geometry_msgs::msg::WrenchStamped>(
       "target_wrench", rclcpp::QoS(1), target_wrench_callback);
 
-  // ToDo: for the callback we should be maybe use a RT buffer as well
-  ft_sensor_sub_ = get_node()->create_subscription<geometry_msgs::msg::WrenchStamped>(
+  ft_sensor_sub_ = get_node()->create_subscription<
+      geometry_msgs::msg::WrenchStamped>(
       "ft_sensor", rclcpp::QoS(1),
       [this](const geometry_msgs::msg::WrenchStamped::SharedPtr msg)
       {
-          wrench_ext <<
-              msg->wrench.force.x,
-              msg->wrench.force.y,
-              msg->wrench.force.z,
-              msg->wrench.torque.x,
-              msg->wrench.torque.y,
-              msg->wrench.torque.z;
+          ft_sensor_buffer_.writeFromNonRT(msg);
       });
 
   // Initialize all control vectors with appropriate dimensions

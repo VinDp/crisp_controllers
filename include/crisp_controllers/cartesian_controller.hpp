@@ -143,6 +143,9 @@ private:
   realtime_tools::RealtimeBuffer<std::shared_ptr<geometry_msgs::msg::WrenchStamped>>
     target_wrench_buffer_;
 
+  realtime_tools::RealtimeBuffer<std::shared_ptr<geometry_msgs::msg::WrenchStamped>>
+    ft_sensor_buffer_;
+
   /** @brief Target position in Cartesian space */
   Eigen::Vector3d target_position_;
   /** @brief Target orientation as quaternion */
