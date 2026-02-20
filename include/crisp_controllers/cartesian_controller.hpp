@@ -22,6 +22,8 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <string>
 #include <unordered_set>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <realtime_tools/realtime_publisher.h>
 
 using CallbackReturn =
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
@@ -103,6 +105,10 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::WrenchStamped>::SharedPtr wrench_sub_;
   /** @brief Subscription for ft sensor readings */
   rclcpp::Subscription<geometry_msgs::msg::WrenchStamped>::SharedPtr ft_sensor_sub_;
+
+  // publish admittance data
+  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr adm_state_pub_;
+  std::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::msg::TwistStamped>> rt_adm_state_pub_;
 
   /** @brief Flag to indicate if multiple publishers detected */
   bool multiple_publishers_detected_;

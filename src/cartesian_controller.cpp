@@ -265,6 +265,23 @@ CartesianController::update(const rclcpp::Time &time,
   params_ = params_listener_->get_params();
   setStiffnessAndDamping();
 
+  if (rt_adm_state_pub_ && rt_adm_state_pub_->trylock()) {
+    rt_adm_state_pub_->msg_.header.stamp = time;
+    rt_adm_state_pub_->msg_.header.frame_id = params_.end_effector_frame;
+
+    // Map position deltas (head<3>) to linear
+    rt_adm_state_pub_->msg_.twist.linear.x = x_adm(0);
+    rt_adm_state_pub_->msg_.twist.linear.y = x_adm(1);
+    rt_adm_state_pub_->msg_.twist.linear.z = x_adm(2);
+
+    // Map rotation deltas (tail<3>) to angular
+    rt_adm_state_pub_->msg_.twist.angular.x = x_adm(3);
+    rt_adm_state_pub_->msg_.twist.angular.y = x_adm(4);
+    rt_adm_state_pub_->msg_.twist.angular.z = x_adm(5);
+
+    rt_adm_state_pub_->unlockAndPublish();
+  }
+
   log_debug_info(time);
 
   return controller_interface::return_type::OK;
@@ -483,6 +500,14 @@ CallbackReturn CartesianController::on_configure(
 
   // Get FT sensor frame id
   ft_sensor_frame_id = model_.getFrameId(params_.ft_sensor_frame);
+
+  // Initialize standard publisher
+  adm_state_pub_ = get_node()->create_publisher<geometry_msgs::msg::TwistStamped>(
+      "~/x_adm", rclcpp::SystemDefaultsQoS());
+
+  // Wrap it in a realtime publisher
+  rt_adm_state_pub_ = std::make_shared<
+      realtime_tools::RealtimePublisher<geometry_msgs::msg::TwistStamped>>(adm_state_pub_);
 
   RCLCPP_INFO(get_node()->get_logger(), "State interfaces and control vectors initialized.");
 
