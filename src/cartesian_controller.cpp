@@ -450,7 +450,7 @@ CallbackReturn CartesianController::on_configure(
 
   ft_sensor_sub_ = get_node()->create_subscription<
       geometry_msgs::msg::WrenchStamped>(
-      "ft_sensor", rclcpp::QoS(1),
+      "wrench_zeroed", rclcpp::QoS(1),
       [this](const geometry_msgs::msg::WrenchStamped::SharedPtr msg)
       {
           ft_sensor_buffer_.writeFromNonRT(msg);
