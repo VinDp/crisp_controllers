@@ -170,8 +170,18 @@ CartesianController::update(const rclcpp::Time &time,
 
   double dt = period.seconds();
 
+  // Eigen::Matrix<double,6,1> F_des = target_wrench_;
+
+  Eigen::Matrix3d R_ref = admittance_reference_pose_.rotation();
+  Eigen::Matrix3d R_ee  = end_effector_pose.rotation();
+
+  Eigen::Matrix3d R_ref_ee = R_ref.transpose() * R_ee;
+
   // RL desired wrench is target_wrench_
-  Eigen::Matrix<double,6,1> F_des = target_wrench_;
+  Eigen::Matrix<double,6,1> F_des_ref;
+
+  F_des_ref.head<3>() = R_ref_ee * target_wrench_.head<3>();
+  F_des_ref.tail<3>() = R_ref_ee * target_wrench_.tail<3>();
 
   // Admittance equation:
   // Md ddx + Dd dx + Kd x = F_des - F_ext
@@ -195,7 +205,7 @@ CartesianController::update(const rclcpp::Time &time,
   // Compute force in endeffector frame
   Eigen::Matrix<double,6,1> F_ee =
     T_ee_ft.toActionMatrix().transpose() * wrench_ext;
-  Eigen::Matrix<double,6,1> F_error = F_des ; //- F_ee;
+  Eigen::Matrix<double,6,1> F_error = F_des_ref ; //- F_ee;
 
   ddx_adm = M_adm.ldlt().solve(F_error - D_adm * dx_adm - K_adm * x_adm);
   // ddx_adm = Md.inverse() * (F_error - Dd * dx_adm - Kd * x_adm);
