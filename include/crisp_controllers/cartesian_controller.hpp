@@ -277,6 +277,8 @@ private:
   /** @brief External wrench */
   Eigen::Matrix<double,6,1> wrench_ext;
 
+  pinocchio::SE3 admittance_reference_pose_;
+
   /**
    * @brief Log debug information based on parameter settings
    * @param time Current time for throttling logs

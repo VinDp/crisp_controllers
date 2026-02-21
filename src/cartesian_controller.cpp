@@ -97,14 +97,24 @@ CartesianController::update(const rclcpp::Time &time,
 
   Eigen::Matrix3d R_delta = pinocchio::exp3(delta_rot);
 
-  pinocchio::SE3 new_target_pose =
-      pinocchio::SE3(
-          R_delta * end_effector_pose.rotation(),
-          end_effector_pose.translation() + delta_pos);
+  // pinocchio::SE3 new_target_pose =
+  //     pinocchio::SE3(
+  //         R_delta * end_effector_pose.rotation(),
+  //         end_effector_pose.translation() + delta_pos);
 
-  target_pose_ = pinocchio::exp6(exponential_moving_average(
-      pinocchio::log6(target_pose_), pinocchio::log6(new_target_pose),
-      params_.filter.target_pose));
+  // Build pose relative to fixed admittance reference
+  pinocchio::SE3 delta_pose(
+      R_delta,
+      delta_pos
+  );
+
+  pinocchio::SE3 new_target_pose =
+      admittance_reference_pose_ * delta_pose;
+
+  target_pose_ = new_target_pose;
+  // target_pose_ = pinocchio::exp6(exponential_moving_average(
+  //     pinocchio::log6(target_pose_), pinocchio::log6(new_target_pose),
+  //     params_.filter.target_pose));
 
   /*target_pose_ = pinocchio::SE3(target_orientation_.toRotationMatrix(),
    * target_position_);*/
@@ -604,10 +614,16 @@ CallbackReturn CartesianController::on_activate(
 
   end_effector_pose = data_.oMf[end_effector_frame_id];
 
-  target_position_ = end_effector_pose.translation();
-  target_orientation_ = Eigen::Quaterniond(end_effector_pose.rotation());
-  target_pose_ =
-      pinocchio::SE3(target_orientation_.toRotationMatrix(), target_position_);
+  // Store fixed reference pose for admittance
+  admittance_reference_pose_ = end_effector_pose;
+
+  // target_position_ = end_effector_pose.translation();
+  // target_orientation_ = Eigen::Quaterniond(end_effector_pose.rotation());
+  // target_pose_ =
+  //     pinocchio::SE3(target_orientation_.toRotationMatrix(), target_position_);
+
+  // Initialize target pose exactly at current pose
+  target_pose_ = admittance_reference_pose_;
 
   RCLCPP_INFO(get_node()->get_logger(), "Controller activated.");
   return CallbackReturn::SUCCESS;
