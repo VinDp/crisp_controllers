@@ -287,9 +287,9 @@ CartesianController::update(const rclcpp::Time &time,
 
   tau_previous = tau_d;
 
-  params_listener_->refresh_dynamic_parameters();
-  params_ = params_listener_->get_params();
-  setStiffnessAndDamping();
+  // params_listener_->refresh_dynamic_parameters();
+  // params_ = params_listener_->get_params();
+  // setStiffnessAndDamping();
 
   if (rt_adm_state_pub_ && rt_adm_state_pub_->trylock()) {
     rt_adm_state_pub_->msg_.header.stamp = time;
