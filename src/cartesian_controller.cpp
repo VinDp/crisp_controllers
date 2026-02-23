@@ -211,7 +211,14 @@ CartesianController::update(const rclcpp::Time &time,
   Eigen::Matrix<double,6,1> F_ref =
     T_ref_ee.toActionMatrix().transpose() * F_ee;
 
-  Eigen::Matrix<double,6,1> F_error = F_des_ref ; //- F_ee;
+  // Implement Deadband for sensor bias
+  for (int i = 0; i < 6; ++i)
+  {
+      if (std::abs(F_ref[i]) < 100.0)
+          F_ref[i] = 0.0;
+  }
+
+  Eigen::Matrix<double,6,1> F_error = F_des_ref - F_ref;
 
   ddx_adm = M_adm.ldlt().solve(F_error - D_adm * dx_adm - K_adm * x_adm);
   // ddx_adm = Md.inverse() * (F_error - Dd * dx_adm - Kd * x_adm);
