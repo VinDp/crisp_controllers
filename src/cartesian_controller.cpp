@@ -205,6 +205,12 @@ CartesianController::update(const rclcpp::Time &time,
   // Compute force in endeffector frame
   Eigen::Matrix<double,6,1> F_ee =
     T_ee_ft.toActionMatrix().transpose() * wrench_ext;
+
+  pinocchio::SE3 T_ref_world = admittance_reference_pose_;
+  pinocchio::SE3 T_ref_ee = T_ref_world.inverse() * T_ee_world;
+  Eigen::Matrix<double,6,1> F_ref =
+    T_ref_ee.toActionMatrix().transpose() * F_ee;
+
   Eigen::Matrix<double,6,1> F_error = F_des_ref ; //- F_ee;
 
   ddx_adm = M_adm.ldlt().solve(F_error - D_adm * dx_adm - K_adm * x_adm);
