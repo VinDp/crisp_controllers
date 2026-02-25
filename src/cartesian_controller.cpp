@@ -172,16 +172,23 @@ CartesianController::update(const rclcpp::Time &time,
 
   // Eigen::Matrix<double,6,1> F_des = target_wrench_;
 
-  Eigen::Matrix3d R_ref = admittance_reference_pose_.rotation();
-  Eigen::Matrix3d R_ee  = end_effector_pose.rotation();
+  //Eigen::Matrix3d R_ref = admittance_reference_pose_.rotation();
+  //Eigen::Matrix3d R_ee  = end_effector_pose.rotation();
 
-  Eigen::Matrix3d R_ref_ee = R_ref.transpose() * R_ee;
+  //Eigen::Matrix3d R_ref_ee = R_ref.transpose() * R_ee;
 
   // RL desired wrench is target_wrench_
-  Eigen::Matrix<double,6,1> F_des_ref;
+  //Eigen::Matrix<double,6,1> F_des_ref;
 
-  F_des_ref.head<3>() = R_ref_ee * target_wrench_.head<3>();
-  F_des_ref.tail<3>() = R_ref_ee * target_wrench_.tail<3>();
+  //F_des_ref.head<3>() = R_ref_ee * target_wrench_.head<3>();
+  //F_des_ref.tail<3>() = R_ref_ee * target_wrench_.tail<3>();
+
+  // Desired wrench is given in BASE frame
+  pinocchio::SE3 T_ref_world = admittance_reference_pose_;
+  pinocchio::SE3 T_ref_base = T_ref_world.inverse();  // since base == world
+  
+  Eigen::Matrix<double,6,1> F_des_ref =
+      T_ref_base.toActionMatrix().transpose() * target_wrench_;
 
   // Admittance equation:
   // Md ddx + Dd dx + Kd x = F_des - F_ext
@@ -206,7 +213,7 @@ CartesianController::update(const rclcpp::Time &time,
   Eigen::Matrix<double,6,1> F_ee =
     T_ee_ft.toActionMatrix().transpose() * wrench_ext;
 
-  pinocchio::SE3 T_ref_world = admittance_reference_pose_;
+  // pinocchio::SE3 T_ref_world = admittance_reference_pose_;
   pinocchio::SE3 T_ref_ee = T_ref_world.inverse() * T_ee_world;
   Eigen::Matrix<double,6,1> F_ref =
     T_ref_ee.toActionMatrix().transpose() * F_ee;
@@ -214,7 +221,7 @@ CartesianController::update(const rclcpp::Time &time,
   // Implement Deadband for sensor bias
   for (int i = 0; i < 6; ++i)
   {
-      if (std::abs(F_ref[i]) < 100.0)
+      if (std::abs(F_ref[i]) < 0.5)
           F_ref[i] = 0.0;
   }
 
